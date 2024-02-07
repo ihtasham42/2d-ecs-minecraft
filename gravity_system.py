@@ -12,3 +12,8 @@ def run_gravity_system(entities):
         physics.gravity_velocity = min(
             physics.gravity_velocity + GRAVITY, TERMINAL_VELOCITY
         )
+
+        collision = entity.get_component(Component.COLLISION)
+
+        if collision.grounded:
+            physics.gravity_velocity = 0

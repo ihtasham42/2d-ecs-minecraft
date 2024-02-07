@@ -25,6 +25,17 @@ def run_rigidbody_system(entities):
                 velocity.x -= 1
             if InputType.MOVE_RIGHT in inputs_listened:
                 velocity.x += 1
+            if InputType.JUMP in inputs_listened:
+                collision = entity.get_component(Component.COLLISION)
+                physics = entity.get_component(Component.PHYSICS)
+
+                if collision and not collision.grounded:
+                    continue
+
+                physics.gravity_velocity = -2
+
+                if collision:
+                    collision.grounded = False
 
         position.x += velocity.x
         position.y += velocity.y

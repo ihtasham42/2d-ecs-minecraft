@@ -31,11 +31,15 @@ def create_player():
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
-            Component.SIZE: SizeComponent(width=16, height=16),
+            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
             Component.PHYSICS: PhysicsComponent(),
             Component.SPRITE: SpriteComponent("sprites/entity.png"),
             Component.INPUT: InputComponent(
-                {InputType.MOVE_LEFT: pygame.K_a, InputType.MOVE_RIGHT: pygame.K_d}
+                {
+                    InputType.MOVE_LEFT: pygame.K_a,
+                    InputType.MOVE_RIGHT: pygame.K_d,
+                    InputType.JUMP: pygame.K_w,
+                }
             ),
         }
     )
@@ -47,7 +51,7 @@ def create_tile(x, y):
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(x=x, y=y),
             Component.SIZE: SizeComponent(TILE_SIZE, TILE_SIZE),
-            Component.SPRITE: SpriteComponent("sprites/entity.png"),
+            Component.SPRITE: SpriteComponent("sprites/block.png"),
         }
     )
 
