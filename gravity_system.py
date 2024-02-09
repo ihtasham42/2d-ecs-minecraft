@@ -4,16 +4,12 @@ from constants import GRAVITY, TERMINAL_VELOCITY
 
 
 def run_gravity_system(entities):
-    filtered_entities = get_entities_with(entities, Component.PHYSICS)
+    filtered_entities = get_entities_with(
+        entities, Component.PHYSICS, Component.VELOCITY
+    )
 
     for entity in filtered_entities:
-        physics = entity.get_component(Component.PHYSICS)
+        velocity = entity.get_component(Component.VELOCITY)
 
-        physics.gravity_velocity = min(
-            physics.gravity_velocity + GRAVITY, TERMINAL_VELOCITY
-        )
-
-        collision = entity.get_component(Component.COLLISION)
-
-        if collision.grounded:
-            physics.gravity_velocity = 0
+        if velocity.y < TERMINAL_VELOCITY:
+            velocity.y += GRAVITY

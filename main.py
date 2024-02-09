@@ -16,7 +16,6 @@ from gravity_system import run_gravity_system
 from sprite_system import run_sprite_system
 from rigidbody_system import run_rigidbody_system
 from input_system import run_input_system
-from collision_system import run_collision_system
 
 pygame.init()
 
@@ -31,7 +30,7 @@ def create_player():
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
-            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
+            Component.SIZE: SizeComponent(width=TILE_SIZE * 5, height=TILE_SIZE * 5),
             Component.PHYSICS: PhysicsComponent(),
             Component.SPRITE: SpriteComponent("sprites/entity.png"),
             Component.INPUT: InputComponent(
@@ -61,6 +60,10 @@ def generate_world(entities):
         tile = create_tile(i, 400)
         entities.append(tile)
 
+    for i in range(400, 800, TILE_SIZE):
+        tile = create_tile(i, 400 - TILE_SIZE)
+        entities.append(tile)
+
 
 def init_game():
     generate_world(entities)
@@ -80,11 +83,12 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
+    screen.fill((0, 0, 255))
+
     run_input_system(entities)
     run_gravity_system(entities)
     run_rigidbody_system(entities)
-    run_collision_system(entities)
-    screen.fill(BLACK)
+
     run_sprite_system(entities, screen)
     pygame.display.update()
 
