@@ -10,6 +10,8 @@ class Component(Enum):
     SPRITE = "sprite"
     PHYSICS = "physics"
     INPUT = "input"
+    CAMERA = "camera"
+    TILE = "tile"
 
 
 class PositionComponent:
@@ -54,3 +56,11 @@ class InputComponent:
     def __init__(self, listening_inputs):
         self.listening_inputs = listening_inputs
         self.inputs_listened = set()
+
+
+class CameraComponent:
+    pass
+
+
+class TileComponent:
+    pass

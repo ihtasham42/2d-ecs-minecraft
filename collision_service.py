@@ -51,8 +51,16 @@ def handle_collision(entities, colliding_entity, axis):
                 collision.grounded = True
                 velocity.y = 0
 
-        # for corner in get_entity_corners(entity1).values():
-        #     pygame.draw.rect(screen, (255, 0, 0), (corner.x, corner.y, 2, 2))
+            while is_corner_contained_within(
+                get_entity_corners(colliding_entity)[Corner.TOP_LEFT],
+                get_entity_corners(entity),
+            ) or is_corner_contained_within(
+                get_entity_corners(colliding_entity)[Corner.TOP_RIGHT],
+                get_entity_corners(entity),
+            ):
+                position.y += 1
+                collision.grounded = False
+                velocity.y = 0
 
 
 def is_corner_contained_within(contained_corner, corners):

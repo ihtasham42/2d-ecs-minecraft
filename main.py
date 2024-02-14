@@ -1,5 +1,5 @@
 import pygame
-from constants import SCREEN_SIZE, BLACK, TILE_SIZE
+from constants import SCREEN_SIZE, LIGHT_BLUE, TILE_SIZE
 from entity import Entity
 from input_type import InputType
 from components import (
@@ -11,11 +11,13 @@ from components import (
     SizeComponent,
     PhysicsComponent,
     InputComponent,
+    CameraComponent,
 )
 from gravity_system import run_gravity_system
 from sprite_system import run_sprite_system
 from rigidbody_system import run_rigidbody_system
 from input_system import run_input_system
+from chunk_system import run_chunk_system
 
 pygame.init()
 
@@ -24,13 +26,35 @@ screen = pygame.display.set_mode(SCREEN_SIZE)
 entities = []
 
 
+def create_flying_player():
+    return Entity(
+        {
+            Component.COLLISION: CollisionComponent(),
+            Component.POSITION: PositionComponent(),
+            Component.VELOCITY: VelocityComponent(),
+            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
+            Component.SPRITE: SpriteComponent("sprites/entity.png"),
+            Component.INPUT: InputComponent(
+                {
+                    InputType.MOVE_LEFT: pygame.K_a,
+                    InputType.MOVE_RIGHT: pygame.K_d,
+                    InputType.MOVE_DOWN: pygame.K_s,
+                    InputType.MOVE_UP: pygame.K_w,
+                    InputType.JUMP: pygame.K_w,
+                }
+            ),
+            Component.CAMERA: CameraComponent(),
+        }
+    )
+
+
 def create_player():
     return Entity(
         {
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
-            Component.SIZE: SizeComponent(width=TILE_SIZE * 5, height=TILE_SIZE * 5),
+            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
             Component.PHYSICS: PhysicsComponent(),
             Component.SPRITE: SpriteComponent("sprites/entity.png"),
             Component.INPUT: InputComponent(
@@ -40,35 +64,25 @@ def create_player():
                     InputType.JUMP: pygame.K_w,
                 }
             ),
+            Component.CAMERA: CameraComponent(),
         }
     )
 
 
-def create_tile(x, y):
-    return Entity(
-        {
-            Component.COLLISION: CollisionComponent(),
-            Component.POSITION: PositionComponent(x=x, y=y),
-            Component.SIZE: SizeComponent(TILE_SIZE, TILE_SIZE),
-            Component.SPRITE: SpriteComponent("sprites/block.png"),
-        }
-    )
+# def generate_world(entities):
+#     for i in range(0, 800, TILE_SIZE):
+#         tile = create_tile(i, 400)
+#         entities.append(tile)
 
-
-def generate_world(entities):
-    for i in range(0, 800, TILE_SIZE):
-        tile = create_tile(i, 400)
-        entities.append(tile)
-
-    for i in range(400, 800, TILE_SIZE):
-        tile = create_tile(i, 400 - TILE_SIZE)
-        entities.append(tile)
+#     for i in range(320, 1200, TILE_SIZE):
+#         tile = create_tile(i, 400 - TILE_SIZE)
+#         entities.append(tile)
 
 
 def init_game():
-    generate_world(entities)
+    # generate_world(entities)
 
-    player = create_player()
+    player = create_flying_player()
     entities.append(player)
 
 
@@ -83,12 +97,11 @@ while run:
         if event.type == pygame.QUIT:
             run = False
 
-    screen.fill((0, 0, 255))
-
     run_input_system(entities)
     run_gravity_system(entities)
     run_rigidbody_system(entities)
-
+    run_chunk_system(entities)
+    screen.fill(LIGHT_BLUE)
     run_sprite_system(entities, screen)
     pygame.display.update()
 
