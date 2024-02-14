@@ -20,13 +20,13 @@ def run_rigidbody_system(entities):
             inputs_listened = input_component.inputs_listened
 
             if InputType.MOVE_LEFT in inputs_listened:
-                position.x -= 2
+                x_diff -= 2
             if InputType.MOVE_RIGHT in inputs_listened:
-                position.x += 2
+                x_diff += 2
             if InputType.MOVE_UP in inputs_listened:
-                position.y -= 2
+                y_diff -= 2
             if InputType.MOVE_DOWN in inputs_listened:
-                position.y += 2
+                y_diff += 2
             if InputType.JUMP in inputs_listened:
                 do_jump(entity, velocity)
 

@@ -1,5 +1,5 @@
 import pygame
-from constants import SCREEN_SIZE, LIGHT_BLUE, TILE_SIZE
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT, LIGHT_BLUE, TILE_SIZE
 from entity import Entity
 from input_type import InputType
 from components import (
@@ -21,7 +21,7 @@ from chunk_system import run_chunk_system
 
 pygame.init()
 
-screen = pygame.display.set_mode(SCREEN_SIZE)
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 
 entities = []
 
@@ -29,7 +29,6 @@ entities = []
 def create_flying_player():
     return Entity(
         {
-            Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
             Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
@@ -40,7 +39,6 @@ def create_flying_player():
                     InputType.MOVE_RIGHT: pygame.K_d,
                     InputType.MOVE_DOWN: pygame.K_s,
                     InputType.MOVE_UP: pygame.K_w,
-                    InputType.JUMP: pygame.K_w,
                 }
             ),
             Component.CAMERA: CameraComponent(),

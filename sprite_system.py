@@ -1,6 +1,6 @@
 from entity import get_entities_with
 from components import Component
-from constants import SCREEN_SIZE
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 import pygame
 
 image_cache = {}
@@ -18,8 +18,8 @@ def run_sprite_system(entities, screen):
     camera_position = camera_entity.get_component(Component.POSITION)
     camera_size = camera_entity.get_component(Component.SIZE)
 
-    camera_offset_x = SCREEN_SIZE[0] // 2 - camera_size.width // 2
-    camera_offset_y = SCREEN_SIZE[1] // 2 - camera_size.height // 2
+    camera_offset_x = SCREEN_WIDTH // 2 - camera_size.width // 2
+    camera_offset_y = SCREEN_HEIGHT // 2 - camera_size.height // 2
 
     filtered_entities = get_entities_with(
         entities, Component.SPRITE, Component.SIZE, Component.POSITION
