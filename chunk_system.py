@@ -18,26 +18,20 @@ from components import (
     TileComponent,
 )
 
+import json
+import os
+import random
+
 last_current_chunk_x = -100
 last_current_chunk_y = -100
 done = False
 
+chunk_index = 1  # random.randint(0, 10000000)
+
+CHUNKS_DIR = f"chunks/{chunk_index}"
+
 
 def run_chunk_system(entities):
-    # global done
-    # if done:
-    #     return
-    # for i in range(0, 800, TILE_SIZE):
-    #     tile = create_tile(i, 400)
-    #     entities.append(tile)
-
-    # for i in range(320, 1200, TILE_SIZE):
-    #     tile = create_tile(i, 400 - TILE_SIZE)
-    #     entities.append(tile)
-
-    # done = True
-    # return
-
     camera_filtered_entities = get_entities_with(
         entities, Component.POSITION, Component.CAMERA
     )
@@ -48,14 +42,8 @@ def run_chunk_system(entities):
     camera_entity = camera_filtered_entities[0]
     camera_position = camera_entity.get_component(Component.POSITION)
 
-    current_chunk_x = int(
-        (camera_position.x + (CHUNK_WIDTH * TILE_SIZE) // 2)
-        // (CHUNK_WIDTH * TILE_SIZE)
-    )
-    current_chunk_y = int(
-        (camera_position.y + (CHUNK_HEIGHT * TILE_SIZE) // 2)
-        // (CHUNK_HEIGHT * TILE_SIZE)
-    )
+    current_chunk_x = int((camera_position.x) // (CHUNK_WIDTH * TILE_SIZE))
+    current_chunk_y = int((camera_position.y) // (CHUNK_HEIGHT * TILE_SIZE))
 
     global last_current_chunk_x, last_current_chunk_y
 
@@ -63,7 +51,6 @@ def run_chunk_system(entities):
         current_chunk_x != last_current_chunk_x
         or current_chunk_y != last_current_chunk_y
     ):
-        print(current_chunk_x, current_chunk_y)
         chunks_loaded = set(
             get_chunks_in_range(last_current_chunk_x, last_current_chunk_y)
         )
@@ -74,13 +61,9 @@ def run_chunk_system(entities):
 
         unloaded_chunks_to_load = chunks_to_load - chunks_loaded
 
-        # print("chunks to load", unloaded_chunks_to_load)
-        # print("chunks to unload", chunks_to_unload)
-
         tile_entities = get_entities_with(entities, Component.TILE)
-        # print(len(tile_entities))
-        unload_chunk(entities, tile_entities, chunks_to_unload)
 
+        unload_chunk(entities, tile_entities, chunks_to_unload)
         load_chunk(entities, unloaded_chunks_to_load)
 
         last_current_chunk_x = current_chunk_x
@@ -88,57 +71,49 @@ def run_chunk_system(entities):
 
 
 def load_chunk(entities, unloaded_chunks_to_load):
+    os.makedirs(CHUNKS_DIR, exist_ok=True)
+
     for chunk_x, chunk_y in unloaded_chunks_to_load:
-        chunk_key = str(chunk_x) + "_" + str(chunk_y)
+        chunk_key = f"{chunk_x}_{chunk_y}"
+        chunk_filename = f"{CHUNKS_DIR}/{chunk_key}.json"
 
-        if False:  # Check if chunk_key exists
-            # load chunk from file
-            pass
+        if os.path.exists(chunk_filename):  # Check if chunk_key exists
+            with open(chunk_filename, "r") as file:
+                chunk_data = json.load(file)
+
+                for tile_data in chunk_data.values():
+                    print(tile_data)
+                    entity = create_tile(tile_data["x"], tile_data["y"])
+                    entities.append(entity)
         else:
-            # tile_y = (chunk_y + 1) * (CHUNK_HEIGHT * TILE_SIZE)
-            # for tile_x in range(
-            #     chunk_x * CHUNK_WIDTH * TILE_SIZE,
-            #     (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
-            #     TILE_SIZE,
-            # ):
-            #     entity = create_tile(tile_x, tile_y)
-            #     entities.append(entity)
+            chunk_data = {}
 
             for tile_x in range(
                 chunk_x * CHUNK_WIDTH * TILE_SIZE,
                 (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
                 TILE_SIZE,
             ):
-                entity = create_tile(tile_x, (chunk_y) * (CHUNK_HEIGHT * TILE_SIZE))
-                entities.append(entity)
-            for tile_x in range(
-                chunk_x * CHUNK_WIDTH * TILE_SIZE,
-                (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
-                TILE_SIZE,
-            ):
-                entity = create_tile(tile_x, (chunk_y + 1) * (CHUNK_HEIGHT * TILE_SIZE))
-                entities.append(entity)
+                for tile_y in range(
+                    chunk_y * CHUNK_HEIGHT * TILE_SIZE,
+                    (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
+                    TILE_SIZE,
+                ):
+                    if random.randint(0, 1) == 1 and tile_y >= 1:
 
-            for tile_y in range(
-                chunk_y * CHUNK_HEIGHT * TILE_SIZE,
-                (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
-                TILE_SIZE,
-            ):
-                entity = create_tile((chunk_x) * (CHUNK_WIDTH * TILE_SIZE), tile_y)
-                entities.append(entity)
+                        entity = create_tile(tile_x, tile_y)
+                        entities.append(entity)
 
-            for tile_y in range(
-                chunk_y * CHUNK_HEIGHT * TILE_SIZE,
-                (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
-                TILE_SIZE,
-            ):
-                entity = create_tile((chunk_x + 1) * (CHUNK_WIDTH * TILE_SIZE), tile_y)
-                entities.append(entity)
+                        tile_key = f"{tile_x}_{tile_y}"
+
+                        chunk_data[tile_key] = {"x": tile_x, "y": tile_y}
+
+            with open(chunk_filename, "w") as file:
+                json.dump(chunk_data, file)
 
 
 def unload_chunk(entities, tile_entities, chunks_to_unload):
     tile_ids_to_remove = []
-    # print(chunks_to_unload)
+
     for tile in tile_entities:
         tile_position = tile.get_component(Component.POSITION)
 
@@ -146,12 +121,14 @@ def unload_chunk(entities, tile_entities, chunks_to_unload):
             chunk_key = str(chunk_x) + "_" + str(chunk_y)
 
             if is_tile_in_chunk(tile_position, chunk_x, chunk_y):
-                # save this tile in the associated chunk file
                 tile_ids_to_remove.append(tile.id)
-    print(len(entities))
 
-    entities = [entity for entity in entities if entity.id not in tile_ids_to_remove]
-    print(len(entities))
+    filtered_entities = [
+        entity for entity in entities if entity.id not in tile_ids_to_remove
+    ]
+
+    entities.clear()
+    entities.extend(filtered_entities)
 
 
 def is_tile_in_chunk(tile_position, chunk_x, chunk_y):

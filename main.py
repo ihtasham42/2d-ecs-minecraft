@@ -52,7 +52,7 @@ def create_player():
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
-            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
+            Component.SIZE: SizeComponent(width=TILE_SIZE // 2, height=TILE_SIZE // 2),
             Component.PHYSICS: PhysicsComponent(),
             Component.SPRITE: SpriteComponent("sprites/entity.png"),
             Component.INPUT: InputComponent(
@@ -67,20 +67,8 @@ def create_player():
     )
 
 
-# def generate_world(entities):
-#     for i in range(0, 800, TILE_SIZE):
-#         tile = create_tile(i, 400)
-#         entities.append(tile)
-
-#     for i in range(320, 1200, TILE_SIZE):
-#         tile = create_tile(i, 400 - TILE_SIZE)
-#         entities.append(tile)
-
-
 def init_game():
-    # generate_world(entities)
-
-    player = create_flying_player()
+    player = create_player()
     entities.append(player)
 
 
