@@ -83,8 +83,9 @@ def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
             TILE_SIZE,
         ):
             height = int(noise.pnoise1(tile_x * 0.003, 2) * TILE_SIZE * 5)
+            chance = noise.pnoise2(tile_x * 0.005, tile_y * 0.005)
 
-            if tile_y > height:
+            if tile_y > height and chance < 0.2:
                 entity = create_tile(tile_x, tile_y)
                 entities.append(entity)
 
