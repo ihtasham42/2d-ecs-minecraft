@@ -19,14 +19,16 @@ def run_rigidbody_system(entities):
             input_component = entity.get_component(Component.INPUT)
             inputs_listened = input_component.inputs_listened
 
+            speed = 6
+
             if InputType.MOVE_LEFT in inputs_listened:
-                x_diff -= 2
+                x_diff -= speed
             if InputType.MOVE_RIGHT in inputs_listened:
-                x_diff += 2
+                x_diff += speed
             if InputType.MOVE_UP in inputs_listened:
-                y_diff -= 2
+                y_diff -= speed
             if InputType.MOVE_DOWN in inputs_listened:
-                y_diff += 2
+                y_diff += speed
             if InputType.JUMP in inputs_listened:
                 do_jump(entity, velocity)
 

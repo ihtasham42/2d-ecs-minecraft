@@ -6,8 +6,6 @@ from constants import (
     CHUNK_HEIGHT,
     CHUNK_RANGE,
     TILE_SIZE,
-    SCREEN_WIDTH,
-    SCREEN_HEIGHT,
 )
 from components import (
     Component,
@@ -21,12 +19,13 @@ from components import (
 import json
 import os
 import random
+import noise
 
 last_current_chunk_x = -100
 last_current_chunk_y = -100
 done = False
 
-chunk_index = 1  # random.randint(0, 10000000)
+chunk_index = random.randint(0, 10000000)
 
 CHUNKS_DIR = f"chunks/{chunk_index}"
 
@@ -70,6 +69,42 @@ def run_chunk_system(entities):
         last_current_chunk_y = current_chunk_y
 
 
+def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
+    chunk_data = {}
+
+    for tile_x in range(
+        chunk_x * CHUNK_WIDTH * TILE_SIZE,
+        (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
+        TILE_SIZE,
+    ):
+        for tile_y in range(
+            chunk_y * CHUNK_HEIGHT * TILE_SIZE,
+            (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
+            TILE_SIZE,
+        ):
+            height = int(noise.pnoise1(tile_x * 0.003, 2) * TILE_SIZE * 5)
+
+            if tile_y > height:
+                entity = create_tile(tile_x, tile_y)
+                entities.append(entity)
+
+                tile_key = f"{tile_x}_{tile_y}"
+
+                chunk_data[tile_key] = {"x": tile_x, "y": tile_y}
+
+    with open(chunk_filename, "w") as file:
+        json.dump(chunk_data, file)
+
+
+def load_chunk_from_file(entities, chunk_filename):
+    with open(chunk_filename, "r") as file:
+        chunk_data = json.load(file)
+
+        for tile_data in chunk_data.values():
+            entity = create_tile(tile_data["x"], tile_data["y"])
+            entities.append(entity)
+
+
 def load_chunk(entities, unloaded_chunks_to_load):
     os.makedirs(CHUNKS_DIR, exist_ok=True)
 
@@ -78,37 +113,9 @@ def load_chunk(entities, unloaded_chunks_to_load):
         chunk_filename = f"{CHUNKS_DIR}/{chunk_key}.json"
 
         if os.path.exists(chunk_filename):  # Check if chunk_key exists
-            with open(chunk_filename, "r") as file:
-                chunk_data = json.load(file)
-
-                for tile_data in chunk_data.values():
-                    print(tile_data)
-                    entity = create_tile(tile_data["x"], tile_data["y"])
-                    entities.append(entity)
+            load_chunk_from_file(entities, chunk_filename)
         else:
-            chunk_data = {}
-
-            for tile_x in range(
-                chunk_x * CHUNK_WIDTH * TILE_SIZE,
-                (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
-                TILE_SIZE,
-            ):
-                for tile_y in range(
-                    chunk_y * CHUNK_HEIGHT * TILE_SIZE,
-                    (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
-                    TILE_SIZE,
-                ):
-                    if random.randint(0, 1) == 1 and tile_y >= 1:
-
-                        entity = create_tile(tile_x, tile_y)
-                        entities.append(entity)
-
-                        tile_key = f"{tile_x}_{tile_y}"
-
-                        chunk_data[tile_key] = {"x": tile_x, "y": tile_y}
-
-            with open(chunk_filename, "w") as file:
-                json.dump(chunk_data, file)
+            generate_chunk(entities, chunk_filename, chunk_x, chunk_y)
 
 
 def unload_chunk(entities, tile_entities, chunks_to_unload):
@@ -135,10 +142,10 @@ def is_tile_in_chunk(tile_position, chunk_x, chunk_y):
     return (
         chunk_x * CHUNK_WIDTH * TILE_SIZE
         <= tile_position.x
-        <= (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE
+        < (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE
         and chunk_y * CHUNK_HEIGHT * TILE_SIZE
         <= tile_position.y
-        <= (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE
+        < (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE
     )
 
 

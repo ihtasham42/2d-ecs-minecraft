@@ -68,7 +68,7 @@ def create_player():
 
 
 def init_game():
-    player = create_player()
+    player = create_flying_player()
     entities.append(player)
 
 
