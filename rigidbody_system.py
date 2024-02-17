@@ -56,7 +56,7 @@ def do_jump(entity, velocity):
     if collision and not collision.grounded:
         return
 
-    velocity.y = -6
+    velocity.y = -14
 
     if collision:
         collision.grounded = False

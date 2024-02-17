@@ -16,6 +16,9 @@ from components import (
     TileComponent,
 )
 
+from tile_util import get_tile_position
+from tile_type import TileType
+
 import json
 import os
 import random
@@ -28,6 +31,9 @@ done = False
 chunk_index = random.randint(0, 10000000)
 
 CHUNKS_DIR = f"chunks/{chunk_index}"
+
+TUNNEL_THRESHOLD = 0.06
+CAVE_THRESHOLD = 0.4
 
 
 def run_chunk_system(entities):
@@ -72,26 +78,33 @@ def run_chunk_system(entities):
 def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
     chunk_data = {}
 
-    for tile_x in range(
+    for x in range(
         chunk_x * CHUNK_WIDTH * TILE_SIZE,
         (chunk_x + 1) * CHUNK_WIDTH * TILE_SIZE,
         TILE_SIZE,
     ):
-        for tile_y in range(
+        for y in range(
             chunk_y * CHUNK_HEIGHT * TILE_SIZE,
             (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
             TILE_SIZE,
         ):
-            height = int(noise.pnoise1(tile_x * 0.003, 2) * TILE_SIZE * 5)
-            chance = noise.pnoise2(tile_x * 0.005, tile_y * 0.005)
+            tile_x, tile_y = get_tile_position(x, y)
 
-            if tile_y > height and chance < 0.2:
-                entity = create_tile(tile_x, tile_y)
+            height_value = int(noise.pnoise1(tile_x * 0.15, 2) * 5) - 2.5
+            cave_chance = noise.pnoise2(tile_x * 0.05, tile_y * 0.05, 2)
+
+            if -TUNNEL_THRESHOLD < cave_chance < TUNNEL_THRESHOLD:
+                continue
+
+            if tile_y > height_value and cave_chance < CAVE_THRESHOLD:
+                tile_type = TileType.STONE.name
+
+                entity = create_tile(x, y, tile_type)
                 entities.append(entity)
 
-                tile_key = f"{tile_x}_{tile_y}"
+                tile_key = f"{x}_{y}"
 
-                chunk_data[tile_key] = {"x": tile_x, "y": tile_y}
+                chunk_data[tile_key] = {"x": x, "y": y, "type": tile_type}
 
     with open(chunk_filename, "w") as file:
         json.dump(chunk_data, file)
@@ -102,7 +115,7 @@ def load_chunk_from_file(entities, chunk_filename):
         chunk_data = json.load(file)
 
         for tile_data in chunk_data.values():
-            entity = create_tile(tile_data["x"], tile_data["y"])
+            entity = create_tile(tile_data["x"], tile_data["y"], tile_data["type"])
             entities.append(entity)
 
 
@@ -113,7 +126,7 @@ def load_chunk(entities, unloaded_chunks_to_load):
         chunk_key = f"{chunk_x}_{chunk_y}"
         chunk_filename = f"{CHUNKS_DIR}/{chunk_key}.json"
 
-        if os.path.exists(chunk_filename):  # Check if chunk_key exists
+        if os.path.exists(chunk_filename):
             load_chunk_from_file(entities, chunk_filename)
         else:
             generate_chunk(entities, chunk_filename, chunk_x, chunk_y)
@@ -150,13 +163,15 @@ def is_tile_in_chunk(tile_position, chunk_x, chunk_y):
     )
 
 
-def create_tile(x, y):
+def create_tile(x, y, tile_type):
+    filename = f"sprites/tiles/{tile_type}.png"
+
     return Entity(
         {
             Component.COLLISION: CollisionComponent(),
             Component.POSITION: PositionComponent(x=x, y=y),
             Component.SIZE: SizeComponent(TILE_SIZE, TILE_SIZE),
-            Component.SPRITE: SpriteComponent("sprites/block.png"),
+            Component.SPRITE: SpriteComponent(filename),
             Component.TILE: TileComponent(),
         }
     )

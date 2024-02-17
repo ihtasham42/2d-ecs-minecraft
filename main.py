@@ -31,7 +31,7 @@ def create_flying_player():
         {
             Component.POSITION: PositionComponent(),
             Component.VELOCITY: VelocityComponent(),
-            Component.SIZE: SizeComponent(width=TILE_SIZE, height=TILE_SIZE),
+            Component.SIZE: SizeComponent(width=TILE_SIZE // 2, height=TILE_SIZE // 2),
             Component.SPRITE: SpriteComponent("sprites/entity.png"),
             Component.INPUT: InputComponent(
                 {
@@ -68,7 +68,7 @@ def create_player():
 
 
 def init_game():
-    player = create_flying_player()
+    player = create_player()
     entities.append(player)
 
 
