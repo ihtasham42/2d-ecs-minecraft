@@ -32,8 +32,8 @@ chunk_index = random.randint(0, 10000000)
 
 CHUNKS_DIR = f"chunks/{chunk_index}"
 
-TUNNEL_THRESHOLD = 0.06
-CAVE_THRESHOLD = 0.4
+TUNNEL_THRESHOLD = 0.03
+CAVE_THRESHOLD = 0.3
 
 
 def run_chunk_system(entities):
@@ -75,8 +75,8 @@ def run_chunk_system(entities):
         last_current_chunk_y = current_chunk_y
 
 
-def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
-    chunk_data = {}
+def generate_noise_map(chunk_x, chunk_y):
+    noise_map = {}
 
     for x in range(
         chunk_x * CHUNK_WIDTH * TILE_SIZE,
@@ -88,23 +88,58 @@ def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
             (chunk_y + 1) * CHUNK_HEIGHT * TILE_SIZE,
             TILE_SIZE,
         ):
-            tile_x, tile_y = get_tile_position(x, y)
+            noise_map[(x, y)] = calculate_noise_values(x, y)
 
-            height_value = int(noise.pnoise1(tile_x * 0.15, 2) * 5) - 2.5
-            cave_chance = noise.pnoise2(tile_x * 0.05, tile_y * 0.05, 2)
+    return noise_map
 
-            if -TUNNEL_THRESHOLD < cave_chance < TUNNEL_THRESHOLD:
-                continue
 
-            if tile_y > height_value and cave_chance < CAVE_THRESHOLD:
-                tile_type = TileType.STONE.name
+def calculate_noise_values(x, y):
+    tile_x, tile_y = get_tile_position(x, y)
 
-                entity = create_tile(x, y, tile_type)
-                entities.append(entity)
+    height_value = int(noise.pnoise1(tile_x * 0.05, 3) * 10) - 5
+    cave_value = noise.pnoise2(tile_x * 0.05, tile_y * 0.05, 2)
 
-                tile_key = f"{x}_{y}"
+    return {
+        "height": height_value,
+        "cave": cave_value,
+    }
 
-                chunk_data[tile_key] = {"x": x, "y": y, "type": tile_type}
+
+def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
+    chunk_data = {}
+    noise_map = generate_noise_map(chunk_x, chunk_y)
+
+    for x, y in noise_map:
+        tile_x, tile_y = get_tile_position(x, y)
+        noise_values = noise_map[(x, y)]
+
+        height_value = noise_values["height"]
+        cave_value = noise_values["cave"]
+
+        noise_values_above = noise_values.get(
+            (x, y - TILE_SIZE)
+        ) or calculate_noise_values(x, y - TILE_SIZE)
+
+        tile_type = TileType.STONE.name
+
+        if tile_y - 1 <= noise_values_above["height"]:
+            tile_type = TileType.GRASS.name
+
+        # if -TUNNEL_THRESHOLD < cave_value < TUNNEL_THRESHOLD:
+        #     continue
+
+        if cave_value >= CAVE_THRESHOLD:
+            continue
+
+        if tile_y <= height_value:
+            continue
+
+        entity = create_tile(x, y, tile_type)
+        entities.append(entity)
+
+        tile_key = f"{x}_{y}"
+
+        chunk_data[tile_key] = {"x": x, "y": y, "type": tile_type}
 
     with open(chunk_filename, "w") as file:
         json.dump(chunk_data, file)
