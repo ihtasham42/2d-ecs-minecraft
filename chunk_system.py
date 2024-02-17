@@ -98,11 +98,17 @@ def calculate_noise_values(x, y):
 
     height_value = int(noise.pnoise1(tile_x * 0.05, 3) * 10) - 5
     cave_value = noise.pnoise2(tile_x * 0.05, tile_y * 0.05, 2)
+    dirt_value = noise.pnoise2(tile_x * 0.05 + 500, tile_y * 0.05 + 500, 2)
 
-    return {
-        "height": height_value,
-        "cave": cave_value,
-    }
+    return {"height": height_value, "cave": cave_value, "dirt": dirt_value}
+
+
+def is_over_terrain_threshold(x, y, noise_map):
+    _, tile_y = get_tile_position(x, y)
+
+    noise_values = noise_map.get((x, y)) or calculate_noise_values(x, y)
+
+    return tile_y <= noise_values["height"]
 
 
 def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
@@ -110,20 +116,20 @@ def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
     noise_map = generate_noise_map(chunk_x, chunk_y)
 
     for x, y in noise_map:
-        tile_x, tile_y = get_tile_position(x, y)
         noise_values = noise_map[(x, y)]
-
-        height_value = noise_values["height"]
         cave_value = noise_values["cave"]
-
-        noise_values_above = noise_values.get(
-            (x, y - TILE_SIZE)
-        ) or calculate_noise_values(x, y - TILE_SIZE)
 
         tile_type = TileType.STONE.name
 
-        if tile_y - 1 <= noise_values_above["height"]:
+        if is_over_terrain_threshold(x, y - TILE_SIZE, noise_map):
             tile_type = TileType.GRASS.name
+        elif is_over_terrain_threshold(
+            x, y - TILE_SIZE * (3 + random.randint(0, 3)), noise_map
+        ):
+            tile_type = TileType.DIRT.name
+
+        if noise_values["dirt"] > 0.3:
+            tile_type = TileType.DIRT.name
 
         # if -TUNNEL_THRESHOLD < cave_value < TUNNEL_THRESHOLD:
         #     continue
@@ -131,7 +137,7 @@ def generate_chunk(entities, chunk_filename, chunk_x, chunk_y):
         if cave_value >= CAVE_THRESHOLD:
             continue
 
-        if tile_y <= height_value:
+        if is_over_terrain_threshold(x, y, noise_map):
             continue
 
         entity = create_tile(x, y, tile_type)
